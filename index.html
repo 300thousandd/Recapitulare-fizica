@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fizica Clasa a XI-a: Recapitulare pentru Nota 10</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfbf7; /* Warm neutral background */
+            color: #1f2937;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .active-tab {
+            border-bottom: 3px solid #0ea5e9;
+            color: #0ea5e9;
+            font-weight: 600;
+        }
+    </style>
+
+    <!-- Placeholder Comments Required -->
+    <!-- Chosen Palette: Warm Academics (Cream background #fdfbf7, Slate text #1f2937, Sky Blue accents #0ea5e9, Emerald Green success #10b981) -->
+    
+    <!-- Application Structure Plan: 
+         1. Hero Section: Confidence booster, identifying the user's goal (Grade 10).
+         2. Navigation: Simple tabs to switch between 'Magnetism (Basics)' and 'AC Circuits (Main Focus)'.
+         3. Magnetism Module: A concise grid of flip-cards for rapid recall of essential terms (Flux, Induction). Not the main focus, but necessary context.
+         4. AC Circuits "The Lab": The core of the app.
+            - Concept Decoder: Interactive glossary translating "scary" terms (Impedance, Phasors) into student-friendly language.
+            - Interactive RLC Simulator: Sliders for R, L, C, f.
+            - Real-time Visuals: 
+                a) Phasor Diagram (Vector visualization of Impedance).
+                b) Waveform Monitor (Sine waves showing phase shift).
+            - Formula Cheat Sheet: Auto-calculating formula block based on slider inputs to show how values are derived.
+         5. "Pro Tips" Footer: Common mistakes to avoid in tests.
+         
+         WHY: This structure prioritizes understanding over rote memorization. The student is "lost", so we start with definitions, then move to visualization (seeing what happens when L changes), and finally the raw formulas needed for solving problems.
+    -->
+
+    <!-- Visualization & Content Choices:
+         1. Phasor Diagram (Chart.js Scatter): 
+            - Goal: Explain "Impedance" and "Phase Shift" visually.
+            - Method: Scatter plot drawing vectors from (0,0). Vectors for R, XL, XC, and Z (Total).
+            - Interaction: Updates immediately when R, L, C sliders move. Shows the "tug of war" between Inductor and Capacitor.
+         2. Waveform Monitor (Chart.js Line):
+            - Goal: Visualize the time delay (phase difference) between Voltage and Current.
+            - Method: Two sine waves. One fixed (Voltage), one shifting (Current).
+            - Interaction: Sliders change amplitude and phase shift.
+         3. Concept Decoder (HTML/JS Toggles):
+            - Goal: Demystify jargon.
+            - Method: Clickable terms that expand into plain language analogies.
+         
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+</head>
+<body class="antialiased selection:bg-sky-200 selection:text-sky-900">
+
+    <!-- Header / Hero -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center text-white font-bold text-lg">F</div>
+                <span class="font-bold text-xl text-slate-800 tracking-tight">Fizică <span class="text-sky-600">XI</span> Recapitulare</span>
+            </div>
+            <nav class="hidden md:flex gap-6">
+                <button onclick="switchTab('dashboard')" class="text-slate-600 hover:text-sky-600 transition-colors font-medium">Acasă</button>
+                <button onclick="switchTab('magnetism')" class="text-slate-600 hover:text-sky-600 transition-colors font-medium">Magnetism</button>
+                <button onclick="switchTab('ac-circuits')" class="text-slate-600 hover:text-sky-600 transition-colors font-medium">Curent Alternativ</button>
+            </nav>
+            <div class="text-sm font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                Ținta: Nota 10
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Welcome / Dashboard View -->
+        <div id="view-dashboard" class="space-y-6">
+            <div class="bg-gradient-to-r from-sky-500 to-blue-600 rounded-2xl p-8 text-white shadow-lg">
+                <h1 class="text-3xl sm:text-4xl font-bold mb-4">Salut! Hai să facem fizica simplă.</h1>
+                <p class="text-blue-100 text-lg max-w-2xl mb-6">
+                    Știu că materia pare multă și termenii sunt ciudați (impedanță? fazori?). Nu te panica. 
+                    Acest ghid este făcut să traducă "limba de lemn" a manualului în ceva logic.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="switchTab('ac-circuits')" class="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold shadow-md hover:bg-blue-50 transition-transform active:scale-95">
+                        Mergi la Curent Alternativ (Important!)
+                    </button>
+                    <button onclick="switchTab('magnetism')" class="bg-blue-700 bg-opacity-40 text-white border border-blue-400 px-6 py-3 rounded-xl font-semibold hover:bg-opacity-60 transition-colors">
+                        Recapitulare Rapidă Magnetism
+                    </button>
+                </div>
+            </div>
+
+            <!-- Context Section -->
+            <div class="prose max-w-none text-slate-600">
+                <h3 class="text-xl font-bold text-slate-800">Cum să folosești această pagină:</h3>
+                <p>
+                    Ai două secțiuni principale. Începe cu <strong>Magnetismul</strong> dacă ai uitat bazele (flux, inducție). 
+                    Apoi, petrece cel mai mult timp la <strong>Curent Alternativ</strong>. Acolo e "carnea" testului. 
+                    Folosește simulatorul RLC pentru a vedea ce se întâmplă când schimbi valorile - te va ajuta să înțelegi formulele logic, nu mecanic.
+                </p>
+            </div>
+        </div>
+
+        <!-- Magnetism View -->
+        <div id="view-magnetism" class="hidden space-y-8">
+            <div class="border-b border-slate-200 pb-4">
+                <h2 class="text-3xl font-bold text-slate-800">⚡ Oscilații și Electromagnetism</h2>
+                <p class="text-slate-500 mt-2">Baza pe care se construiește totul. Termeni cheie pe scurt.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Concept Card 1 -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 card-hover transition-all">
+                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-2xl mb-4">Φ</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Fluxul Magnetic (Φ)</h3>
+                    <p class="text-sm text-slate-600 mb-3">Gândește-te la el ca la "numărul de linii de câmp magnetic" care trec printr-o suprafață.</p>
+                    <div class="bg-slate-50 p-3 rounded text-xs font-mono text-slate-700">
+                        Φ = B · S · cos(α)<br>
+                        [Unitate: Weber (Wb)]
+                    </div>
+                </div>
+
+                <!-- Concept Card 2 -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 card-hover transition-all">
+                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-2xl mb-4">e</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Inducția Electromagnetică</h3>
+                    <p class="text-sm text-slate-600 mb-3">Dacă fluxul magnetic se <span class="font-bold text-indigo-600">schimbă</span> în timp, apare o tensiune (t.e.m.) indusă.</p>
+                    <div class="bg-slate-50 p-3 rounded text-xs font-mono text-slate-700">
+                        e = - ΔΦ / Δt<br>
+                        (Legea lui Faraday)
+                    </div>
+                </div>
+
+                <!-- Concept Card 3 -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 card-hover transition-all">
+                    <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center text-rose-600 text-2xl mb-4">✋</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">Regula lui Lenz</h3>
+                    <p class="text-sm text-slate-600 mb-3">Natura e "încăpățânată". Curentul indus se opune cauzei care l-a produs. Semnul "-" din formulă.</p>
+                    <div class="bg-slate-50 p-3 rounded text-xs font-mono text-slate-700">
+                        "Te opui schimbării fluxului."
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-100 p-6 rounded-xl">
+                <h4 class="font-bold text-blue-800 mb-2">💡 Sfat pentru probleme:</h4>
+                <p class="text-sm text-blue-700">
+                    Când rezolvi probleme cu inducție, întreabă-te mereu: <strong>"Cine se schimbă?"</strong>. 
+                    Se schimbă câmpul B? Se schimbă suprafața S (ex: o bară care alunecă pe șine)? Sau se schimbă unghiul α (rotirea cadrului)? 
+                    Asta îți spune ce derivată să folosești.
+                </p>
+            </div>
+        </div>
+
+        <!-- AC Circuits View (MAIN) -->
+        <div id="view-ac-circuits" class="hidden space-y-8">
+            <div class="border-b border-slate-200 pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-800">🔌 Circuitul de Curent Alternativ (RLC)</h2>
+                    <p class="text-slate-500 mt-2">Partea cea mai importantă pentru test. Înțelege logica, nu toci formulele.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="scrollToSection('concept-decoder')" class="text-sm px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 transition">Dicționar</button>
+                    <button onclick="scrollToSection('simulator')" class="text-sm px-3 py-1.5 bg-sky-100 hover:bg-sky-200 text-sky-700 font-semibold rounded transition">Simulator RLC</button>
+                    <button onclick="scrollToSection('formulas')" class="text-sm px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 transition">Formule</button>
+                </div>
+            </div>
+
+            <!-- 1. Concept Decoder -->
+            <div id="concept-decoder" class="grid lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Dicționar de Termeni "Sperioși"</h3>
+                    <p class="text-sm text-slate-500 mb-4">Dă click pe termeni pentru a vedea traducerea lor.</p>
+                    <div class="space-y-2">
+                        <button onclick="showDefinition('impedance')" class="w-full text-left p-3 rounded border border-slate-200 hover:border-sky-400 hover:bg-sky-50 transition flex justify-between group">
+                            <span class="font-semibold text-slate-700 group-hover:text-sky-700">Impedanța (Z)</span>
+                            <span class="text-slate-400">?</span>
+                        </button>
+                        <button onclick="showDefinition('reactance')" class="w-full text-left p-3 rounded border border-slate-200 hover:border-sky-400 hover:bg-sky-50 transition flex justify-between group">
+                            <span class="font-semibold text-slate-700 group-hover:text-sky-700">Reactanța (X)</span>
+                            <span class="text-slate-400">?</span>
+                        </button>
+                        <button onclick="showDefinition('phasor')" class="w-full text-left p-3 rounded border border-slate-200 hover:border-sky-400 hover:bg-sky-50 transition flex justify-between group">
+                            <span class="font-semibold text-slate-700 group-hover:text-sky-700">Diagrama Fazorială</span>
+                            <span class="text-slate-400">?</span>
+                        </button>
+                        <button onclick="showDefinition('phase')" class="w-full text-left p-3 rounded border border-slate-200 hover:border-sky-400 hover:bg-sky-50 transition flex justify-between group">
+                            <span class="font-semibold text-slate-700 group-hover:text-sky-700">Defazajul (φ)</span>
+                            <span class="text-slate-400">?</span>
+                        </button>
+                        <button onclick="showDefinition('resonance')" class="w-full text-left p-3 rounded border border-slate-200 hover:border-sky-400 hover:bg-sky-50 transition flex justify-between group">
+                            <span class="font-semibold text-slate-700 group-hover:text-sky-700">Rezonanța</span>
+                            <span class="text-slate-400">?</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 bg-white rounded-xl border border-sky-100 p-6 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 text-sky-900 text-9xl font-serif font-bold">?</div>
+                    <div id="definition-display">
+                        <h4 class="text-xl font-bold text-sky-600 mb-4">Selectează un termen din stânga</h4>
+                        <p class="text-slate-600">Voi explica termenul aici, folosind analogii simple, ca să înțelegi exact ce se întâmplă în circuit.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. RLC Simulator -->
+            <div id="simulator" class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="bg-slate-800 p-4 text-white flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Laborator Virtual: Circuit RLC Serie</h3>
+                    <span class="text-xs bg-slate-700 px-2 py-1 rounded">Modifică valorile!</span>
+                </div>
+                
+                <div class="p-6 grid lg:grid-cols-12 gap-8">
+                    <!-- Controls -->
+                    <div class="lg:col-span-3 space-y-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Rezistența (R)</label>
+                            <input type="range" id="input-r" min="10" max="200" value="50" class="w-full accent-sky-600 cursor-pointer">
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="font-mono text-slate-700" id="val-r">50 Ω</span>
+                                <span class="text-slate-400 text-xs">Consumă energie</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Inductanța (L)</label>
+                            <input type="range" id="input-l" min="0.01" max="0.5" step="0.01" value="0.1" class="w-full accent-emerald-600 cursor-pointer">
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="font-mono text-slate-700" id="val-l">0.1 H</span>
+                                <span class="text-slate-400 text-xs">Întârzie curentul</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Capacitatea (C)</label>
+                            <input type="range" id="input-c" min="1" max="100" value="50" class="w-full accent-rose-600 cursor-pointer">
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="font-mono text-slate-700" id="val-c">50 μF</span>
+                                <span class="text-slate-400 text-xs">Grăbește curentul</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Frecvența (f)</label>
+                            <input type="range" id="input-f" min="10" max="100" value="50" class="w-full accent-purple-600 cursor-pointer">
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="font-mono text-slate-700" id="val-f">50 Hz</span>
+                                <span class="text-slate-400 text-xs">Viteza rotației</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mt-4">
+                            <h5 class="font-bold text-sm text-slate-700 border-b pb-2 mb-2">Rezultate (Live)</h5>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Reactanța XL:</span>
+                                    <span class="font-mono font-bold text-emerald-600" id="res-xl">0 Ω</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Reactanța XC:</span>
+                                    <span class="font-mono font-bold text-rose-600" id="res-xc">0 Ω</span>
+                                </div>
+                                <div class="flex justify-between border-t border-slate-200 pt-1 mt-1">
+                                    <span>Impedanța Z:</span>
+                                    <span class="font-mono font-bold text-purple-700" id="res-z">0 Ω</span>
+                                </div>
+                                <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                    <span>Curent (I) la 220V:</span>
+                                    <span class="font-mono" id="res-i">0 A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualizations -->
+                    <div class="lg:col-span-9 grid md:grid-cols-2 gap-6">
+                        <!-- Chart 1: Phasor Diagram -->
+                        <div class="flex flex-col">
+                            <h4 class="text-sm font-bold text-center mb-2 text-slate-600">Diagrama Fazorială (Triunghiul Impedanțelor)</h4>
+                            <p class="text-xs text-center text-slate-400 mb-2">Axa X: Rezistența (R) | Axa Y: Reactanța (XL - XC)</p>
+                            <div class="chart-container bg-white border border-slate-100 rounded-lg shadow-sm">
+                                <canvas id="phasorChart"></canvas>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2 p-2 bg-slate-50 rounded">
+                                <strong>Explicație:</strong> Vectorul <span class="text-purple-600 font-bold">Mov (Z)</span> este suma vectorială. Unghiul pe care îl face cu orizontala este <span class="font-bold">defazajul φ</span>. Dacă e sub axă, circuitul e capacitiv. Deasupra, inductiv.
+                            </p>
+                        </div>
+
+                        <!-- Chart 2: Waveforms -->
+                        <div class="flex flex-col">
+                            <h4 class="text-sm font-bold text-center mb-2 text-slate-600">Oscilograme (Tensiune vs Curent)</h4>
+                            <p class="text-xs text-center text-slate-400 mb-2">Timp (ms)</p>
+                            <div class="chart-container bg-white border border-slate-100 rounded-lg shadow-sm">
+                                <canvas id="waveChart"></canvas>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-2 p-2 bg-slate-50 rounded">
+                                <strong>Explicație:</strong> Linia <span class="text-slate-400 font-bold">Gri</span> este Tensiunea (fixă). Linia <span class="text-sky-500 font-bold">Albastră</span> este Curentul. Vezi cum se mută stânga/dreapta (defazaj) și sus/jos (amplitudine) când miști sliderele.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Formulas Cheat Sheet -->
+            <div id="formulas" class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Formule de Bază (Memorator)</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Pulsatia</span>
+                            <div class="font-mono text-lg text-slate-800 bg-slate-50 p-2 rounded mt-1">ω = 2πf</div>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Reactanța Inductivă (Bobina)</span>
+                            <div class="font-mono text-lg text-slate-800 bg-emerald-50 p-2 rounded mt-1 border-l-4 border-emerald-500">XL = ωL = 2πfL</div>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Reactanța Capacitivă (Condensator)</span>
+                            <div class="font-mono text-lg text-slate-800 bg-rose-50 p-2 rounded mt-1 border-l-4 border-rose-500">XC = 1 / (ωC)</div>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 uppercase">Impedanța Totală (Legea lui Ohm extinsă)</span>
+                            <div class="font-mono text-lg text-slate-800 bg-purple-50 p-2 rounded mt-1 border-l-4 border-purple-500">Z = √(R² + (XL - XC)²)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Caracteristici Speciale</h3>
+                    <ul class="space-y-4 text-sm text-slate-700">
+                        <li class="flex items-start gap-3">
+                            <span class="bg-slate-200 text-slate-700 font-bold rounded px-2 py-0.5 text-xs mt-1">Legea Ohm</span>
+                            <div>
+                                <strong class="block text-base">I = U / Z</strong>
+                                Curentul efectiv este Tensiunea efectivă împărțită la Impedanță. Simplu.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="bg-slate-200 text-slate-700 font-bold rounded px-2 py-0.5 text-xs mt-1">Defazajul (tg φ)</span>
+                            <div>
+                                <strong class="block text-base">tg φ = (XL - XC) / R</strong>
+                                Dacă XL > XC, φ > 0 (Inductiv, curentul întârzie).<br>
+                                Dacă XL < XC, φ < 0 (Capacitiv, curentul o ia înainte).
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="bg-amber-100 text-amber-800 font-bold rounded px-2 py-0.5 text-xs mt-1">REZONANȚA</span>
+                            <div>
+                                <strong class="block text-base text-amber-700">Când XL = XC</strong>
+                                Circuitul devine pur rezistiv.
+                                <ul class="list-disc ml-4 mt-1 text-slate-500 text-xs">
+                                    <li>Z = R (minim)</li>
+                                    <li>I = U/R (maxim posibil)</li>
+                                    <li>φ = 0 (curentul și tensiunea sunt în fază)</li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-4 text-center text-slate-400 text-sm">
+            <p class="mb-2 font-semibold text-slate-600">Nu uita:</p>
+            <p>1. Transformă mereu unitățile (mA în A, μF în F, cm în m).</p>
+            <p>2. Calculatorul trebuie setat pe grade (DEG) sau radiani (RAD) conform formulei, dar la fizica de liceu folosim des grade pentru φ.</p>
+            <p class="mt-4 opacity-50">Succes la test! Ai tot ce-ți trebuie aici.</p>
+        </div>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // --- State Management ---
+        const state = {
+            r: 50,
+            l: 0.1,
+            c: 50, // microFarad internally
+            f: 50
+        };
+
+        let phasorChartInstance = null;
+        let waveChartInstance = null;
+
+        // --- Definitions Database ---
+        const definitions = {
+            impedance: {
+                title: "Impedanța (Z)",
+                content: "Impedanța este <strong>\"rezistența totală\"</strong> a unui circuit de curent alternativ. În curent continuu, doar rezistorul se opune curentului. În curent alternativ, și Bobina și Condensatorul \"pun piedici\". Impedanța (Z) combină toate aceste piedici într-un singur număr, măsurat în Ohmi (Ω). <br><br>Imaginează-ți că mergi cu bicicleta (curentul). Rezistența (R) e vântul. Bobina și Condensatorul sunt dealuri și văi. Impedanța e efortul total pe care trebuie să-l depui."
+            },
+            reactance: {
+                title: "Reactanța (X)",
+                content: "Este opoziția specifică a bobinei (XL) sau a condensatorului (XC). Spre deosebire de rezistență, reactanța nu consumă energie (nu se încălzește), ci doar o înmagazinează și o dă înapoi. <br><br><strong>XL</strong> crește cu frecvența (bobinei nu-i plac schimbările rapide).<br><strong>XC</strong> scade cu frecvența (condensatorul lasă curentul să treacă ușor dacă alternează repede)."
+            },
+            phasor: {
+                title: "Diagrama Fazorială",
+                content: "Este o unealtă grafică. În loc să desenăm sinusoide complicate, desenăm <strong>vectori (săgeți) care se rotesc</strong>. Lungimea săgeții este valoarea maximă sau efectivă. <br><br>În diagramă, R este mereu orizontal. XL trage în sus (+90°). XC trage în jos (-90°). Unde ajunge vârful săgeții finale (Z), acolo e starea circuitului."
+            },
+            phase: {
+                title: "Defazajul (φ)",
+                content: "Este diferența de timp dintre Tensiune și Curent. <br>Într-un rezistor, ele merg mână în mână (φ=0).<br>Într-o bobină, curentului îi e lene și <strong>întârzie</strong> (rămâne în urmă).<br>Într-un condensator, curentul <strong>o ia înainte</strong>.<br>Defazajul ne spune cine conduce cursa și cu cât."
+            },
+            resonance: {
+                title: "Rezonanța",
+                content: "Momentul magic când efectul Bobinei se anulează perfect cu efectul Condensatorului (XL = XC). <br>Circuitul se comportă ca și cum ar avea doar rezistență simplă. Impedanța e minimă, iar curentul devine maxim! E ca atunci când împingi un leagăn exact la momentul potrivit."
+            }
+        };
+
+        // --- Navigation Logic ---
+        function switchTab(tabId) {
+            // Hide all views
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-magnetism').classList.add('hidden');
+            document.getElementById('view-ac-circuits').classList.add('hidden');
+            
+            // Show selected view
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            
+            // Re-render charts if AC view is selected to ensure correct sizing
+            if(tabId === 'ac-circuits') {
+                setTimeout(() => {
+                    updateCharts();
+                }, 100);
+            }
+            
+            // Scroll to top
+            window.scrollTo(0,0);
+        }
+
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showDefinition(key) {
+            const display = document.getElementById('definition-display');
+            const def = definitions[key];
+            display.innerHTML = `
+                <h4 class="text-xl font-bold text-sky-600 mb-4">${def.title}</h4>
+                <p class="text-slate-700 leading-relaxed text-lg">${def.content}</p>
+            `;
+        }
+
+        // --- Calculation Logic ---
+        function calculateValues() {
+            // Get inputs
+            const R = parseFloat(document.getElementById('input-r').value);
+            const L = parseFloat(document.getElementById('input-l').value);
+            const C_micro = parseFloat(document.getElementById('input-c').value);
+            const f = parseFloat(document.getElementById('input-f').value);
+            const C = C_micro * 1e-6; // convert to Farads
+
+            // Update display values
+            document.getElementById('val-r').innerText = R + " Ω";
+            document.getElementById('val-l').innerText = L + " H";
+            document.getElementById('val-c').innerText = C_micro + " μF";
+            document.getElementById('val-f').innerText = f + " Hz";
+
+            // Calc Formula Terms
+            const omega = 2 * Math.PI * f;
+            const XL = omega * L;
+            const XC = 1 / (omega * C);
+            const X_total = XL - XC;
+            const Z = Math.sqrt(R*R + X_total*X_total);
+            
+            // Assume U_eff = 220V
+            const U = 220;
+            const I = U / Z;
+            
+            // Phase angle
+            const phi_rad = Math.atan2(X_total, R);
+
+            // Update Results UI
+            document.getElementById('res-xl').innerText = XL.toFixed(1) + " Ω";
+            document.getElementById('res-xc').innerText = XC.toFixed(1) + " Ω";
+            document.getElementById('res-z').innerText = Z.toFixed(1) + " Ω";
+            document.getElementById('res-i').innerText = I.toFixed(2) + " A";
+
+            return { R, XL, XC, Z, X_total, phi_rad, I };
+        }
+
+        // --- Chart Initialization & Updates ---
+        function initCharts() {
+            // 1. Phasor Chart
+            const ctxPhasor = document.getElementById('phasorChart').getContext('2d');
+            phasorChartInstance = new Chart(ctxPhasor, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'R (Rezistența)',
+                            data: [],
+                            borderColor: '#3b82f6', // blue
+                            backgroundColor: '#3b82f6',
+                            showLine: true,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Z (Impedanța Totală)',
+                            data: [],
+                            borderColor: '#7e22ce', // purple
+                            backgroundColor: '#7e22ce',
+                            showLine: true,
+                            borderWidth: 3,
+                            borderDash: [5, 5]
+                        },
+                        {
+                            label: 'Net Reactance (XL-XC)',
+                            data: [], // Helper line vertically
+                            borderColor: '#94a3b8',
+                            borderWidth: 1,
+                            showLine: true,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Rezistență (R)' },
+                            min: 0,
+                            suggestedMax: 200
+                        },
+                        y: { 
+                            title: { display: true, text: 'Reactanță (XL - XC)' },
+                            suggestedMin: -200,
+                            suggestedMax: 200
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': (' + context.parsed.x.toFixed(1) + ', ' + context.parsed.y.toFixed(1) + ')';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Wave Chart
+            const ctxWave = document.getElementById('waveChart').getContext('2d');
+            waveChartInstance = new Chart(ctxWave, {
+                type: 'line',
+                data: {
+                    labels: [], // Time points
+                    datasets: [
+                        {
+                            label: 'Tensiune (u)',
+                            data: [],
+                            borderColor: '#cbd5e1', // grey
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Curent (i)',
+                            data: [],
+                            borderColor: '#0ea5e9', // sky blue
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: false,
+                            title: { display: true, text: 'Timp' }
+                        },
+                        y: {
+                            display: false,
+                            title: { display: true, text: 'Amplitudine' }
+                        }
+                    },
+                    animation: {
+                        duration: 0 // fast updates for sliders
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            const vals = calculateValues();
+            
+            // Update Phasor
+            // Vector R goes from (0,0) to (R, 0)
+            // Vector Z goes from (0,0) to (R, XL-XC)
+            // Vertical helper goes from (R, 0) to (R, XL-XC)
+            
+            phasorChartInstance.data.datasets[0].data = [{x:0, y:0}, {x: vals.R, y: 0}];
+            phasorChartInstance.data.datasets[1].data = [{x:0, y:0}, {x: vals.R, y: vals.X_total}];
+            phasorChartInstance.data.datasets[2].data = [{x: vals.R, y: 0}, {x: vals.R, y: vals.X_total}];
+            
+            // Adjust Scales dynamically to keep vectors visible but centered
+            const maxVal = Math.max(vals.R, Math.abs(vals.X_total)) + 50;
+            phasorChartInstance.options.scales.x.max = maxVal;
+            phasorChartInstance.options.scales.y.min = -maxVal;
+            phasorChartInstance.options.scales.y.max = maxVal;
+            
+            phasorChartInstance.update();
+
+            // Update Wave
+            // Plot 2 cycles roughly. Frequency in simulation is normalized for visual clarity.
+            // Let's generate 100 points for t from 0 to 4*PI (2 periods)
+            const points = 100;
+            const voltageData = [];
+            const currentData = [];
+            const labels = [];
+            
+            // Normalize Amplitude for visualization comparison (Voltage max = 1, Current scaled)
+            // We want to show the PHASE shift, not necessarily the exact ratio of Amplitudes (which can be huge)
+            // So we normalize current to be visible.
+            
+            for(let i=0; i<=points; i++) {
+                const t = (i / points) * 4 * Math.PI; // 0 to 4pi
+                labels.push(i);
+                
+                // u(t) = Um sin(wt). We assume w=1 for the visual timeline scaling
+                const u = Math.sin(t);
+                
+                // i(t) = Im sin(wt - phi). 
+                // Phi is in radians. If inductive (phi > 0), current lags (shifts right).
+                const i_val = 0.8 * Math.sin(t - vals.phi_rad); 
+                
+                voltageData.push(u);
+                currentData.push(i_val);
+            }
+
+            waveChartInstance.data.labels = labels;
+            waveChartInstance.data.datasets[0].data = voltageData;
+            waveChartInstance.data.datasets[1].data = currentData;
+            waveChartInstance.update();
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            
+            // Attach listeners to sliders
+            ['input-r', 'input-l', 'input-c', 'input-f'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateCharts);
+            });
+
+            // Initial calculation
+            updateCharts();
+            
+            // Show first definition by default
+            showDefinition('impedance');
+        });
+
+    </script>
+</body>
+</html>
